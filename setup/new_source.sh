@@ -20,7 +20,7 @@ environment(){
 
 	if [[ ! ${FOURKEYS_PROJECT} ]]
 	# If env.sh does not exist, use current active project
-	then FOURKEYS_PROJECT=$(gcloud config get-value project) 
+	then FOURKEYS_PROJECT=$(gcloud config get-value project)
 	fi
 }
 
@@ -55,22 +55,27 @@ build_deploy_cloud_run(){
 	cp -R $DIR/../bq_workers/new_source_template $DIR/../bq_workers/${nickname}_parser
 	cd $DIR/../bq_workers/${nickname}_parser
 	gcloud builds submit --substitutions _SOURCE=${nickname},_REGION=us-central1 \
-						 --project ${FOURKEYS_PROJECT} . 
+						 --project ${FOURKEYS_PROJECT} .
 }
 
 set_permissions(){
 	gcloud iam service-accounts create cloud-run-pubsub-invoker \
-       --display-name "Cloud Run Pub/Sub Invoker" --project ${FOURKEYS_PROJECT}
-  	gcloud run  --platform managed services add-iam-policy-binding ${nickname}-worker \
-	   --member="serviceAccount:cloud-run-pubsub-invoker@${FOURKEYS_PROJECT}.iam.gserviceaccount.com" \
-	   --role=roles/run.invoker --project ${FOURKEYS_PROJECT}
+		--display-name "Cloud Run Pub/Sub Invoker" \
+		--project ${FOURKEYS_PROJECT}
+
+	gcloud run services add-iam-policy-binding ${nickname}-worker \
+		--member="serviceAccount:cloud-run-pubsub-invoker@${FOURKEYS_PROJECT}.iam.gserviceaccount.com" \
+		--role=roles/run.invoker \
+		--project ${FOURKEYS_PROJECT} \
+		--platform managed
 }
 
 setup_pubsub_topic_subscription(){
 	# Get push endpoint for new service
-	export PUSH_ENDPOINT_URL=$(gcloud run --platform managed \
-	--region us-central1 services describe ${nickname}-worker \
-	--format="value(status.url)" --project ${FOURKEYS_PROJECT})
+	export PUSH_ENDPOINT_URL=$(gcloud run services describe ${nickname}-worker \
+			--platform managed \
+			--region us-central1  \
+			--format="value(status.url)" --project ${FOURKEYS_PROJECT})
 
 	# Create topic
 	echo "Creating event handler Pub/Sub topic..."; set -x

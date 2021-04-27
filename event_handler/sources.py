@@ -100,11 +100,14 @@ def get_source(headers):
 AUTHORIZED_SOURCES = {
     "GitHub-Hookshot": EventSource(
         "github", "X-Hub-Signature", github_verification
-        ),
+    ),
     "Gitlab": EventSource(
         "gitlab", "X-Gitlab-Token", simple_token_verification
-        ),
+    ),
     "Tekton": EventSource(
         "tekton", "tekton-secret", simple_token_verification
-        )
+    ),
+    "RhinoSemaphore": EventSource(
+        "rhino-semaphore", "rhino-semaphore-secret", simple_token_verification
+    )
 }
